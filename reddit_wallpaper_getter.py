@@ -16,63 +16,27 @@ import re
 import random
 import argparse
 import socket
+import ctypes
 
+#My preferred subreddit
+REDDIT_URL = 'http://www.reddit.com/r/wallpaper.json?t=week&limit=100'
+TIMEOUT = 5
 
-REDDIT_URL = 'http://www.reddit.com/r/wallpapers/top.json?t=week&limit=50'
-TIMEOUT = 3
-DATA_DIR = os.path.join(os.path.expanduser("~"), '.r_wallpapers')
+#Highly original name for a wallpaper folder (I'm using the working directory)
+DATA_DIR = "wallpaper"
 
 MAX_ATTEMPTS = 5
 SLEEP_SECONDS_AFTER_ATTEMPT = 2
+
+#DIDNT USE THESE CHANGED THE SCRIPT
+#if you want resolution matching these are helpful regexes from the original
 IMGUR_RE = re.compile(
     r'http://(i\.|www\.)?imgur.com/(?P<filename>\w{2,})(\.jpg|/)?$')
 RES_RE = re.compile('\d{3,5}x\d{3,5}')
 RES_DATA_RE = re.compile(
     r'.*([^\d]|^)+(?P<x>\d{3,5}) ?(x|_|×){1} ?(?P<y>\d{3,5}).*', re.UNICODE)
 
-
-ARG_MAP = {
-    'feh': ['feh', ['--bg-center'], '%s'],
-    'gnome': ['gsettings',
-              ['set', 'org.gnome.desktop.background', 'picture-uri'],
-              'file://%s']
-}
-
-WM_BKG_SETTERS = {
-    'spectrwm': ARG_MAP['feh'],
-    'scrotwm': ARG_MAP['feh'],
-    'wmii': ARG_MAP['feh'],
-    'i3': ARG_MAP['feh'],
-    'awesome': ARG_MAP['feh'],
-    'awesome-gnome': ARG_MAP['gnome'],
-    'gnome': ARG_MAP['gnome'],
-    'ubuntu': ARG_MAP['gnome']
-}
-
-
-def get_url(post):
-    """
-    Gets the url of the actual JPG file from the post object.
-    """
-    url = post['data']['url']
-    if url.endswith == 'jpg':
-        return url
-    elif url.endswith == '/':
-        return url.strip('/') + '.jpg'
-    else:
-        return url + '.jpg'
-
-
-def get_filename(post):
-    """
-    Gets the filename from the post object.
-    """
-    return (
-        IMGUR_RE.match(post['data']['url']).group('filename')
-        + '.jpg')
-
-
-def get_image(url, desired_res=None):
+def get_image(url):
     """
     Makes a call to reddit and returns one post randomly from the page
     specified in url.
@@ -97,39 +61,27 @@ def get_image(url, desired_res=None):
             i += 1
 
     candidates = []
-
-    # Alright let's try to find some images with matching resolution.
+    
+    #gather the images
     for item in data.get('data', {}).get('children', {}):
-        url = item.get('data', {}).get('url', '')
-        if IMGUR_RE.match(url):
-            if desired_res:
-                title = item.get('data', {}).get('title', '')
-                permalink = item.get('data', {}).get('permalink', '')
-
-                match = (RES_DATA_RE.match(permalink) or
-                         RES_DATA_RE.match(title))
-
-                if match:
-                    found_res = match.groupdict()
-                    if (
-                            int(desired_res[0]) <= int(found_res['x'])
-                            and int(desired_res[1]) <= int(found_res['y'])):
-                        candidates.append(item)
-            else:
-                candidates.append(item)
+        candidates.append(item['data'])
 
     if len(candidates) == 0:
         return None
     else:
+        #pick a random one
         image = candidates[random.randrange(0, len(candidates))]
-        return (
-            get_url(image),
-            get_filename(image),
-        )
+        
+        #return the [URL,image name,post title]
+        return [
+            image['preview']['images'][0]['source']['url'],
+            'wallpaper_image.jpg',
+            image['title']
+        ]
 
 
 def save_image(url, file_path):
-
+    os.remove(file_path)
     f = open(file_path, 'wb')
 
     i = 0
@@ -153,24 +105,35 @@ def save_image(url, file_path):
             i += 1
 
 
-def display_image(file_path):
-    # Try to find background setter
-    desktop_environ = os.environ.get('DESKTOP_SESSION', '')
-
-    if desktop_environ and desktop_environ in WM_BKG_SETTERS:
-        bkg_setter, args, pic_arg = WM_BKG_SETTERS.get(
-            desktop_environ, [None, None])
-    else:
-        bkg_setter, args, pic_arg = WM_BKG_SETTERS['spectrwm']
-
-    pargs = [bkg_setter] + args + [pic_arg % file_path]
-    subprocess.call(pargs)
+def display_image(image_name,title):
+    
+    cwd = os.getcwd()
+    image_path = os.path.join(cwd, image_name)
+    
+    #THIS THING ADDS TITLES FOR CONTEXT
+    from PIL import ImageFont, ImageDraw, ImageEnhance, Image
+    source_img = Image.open(image_path)
+    width,height = source_img.size
+    draw = ImageDraw.Draw(source_img)
+    
+    #RECTANGLE 100% of width and 7% of the height drawn on the top
+    draw.rectangle(((0, 00), (int(1*width), int(0.07*height))), fill="black")
+    
+    #TEXT is 1% of height and starts 3% from the side
+    draw.text((int(0.03*width), int(0.01*height)), title, font=ImageFont.truetype("C:/Windows/fonts/Arial.ttf",int(0.03*height)))
+    
+    source_img.save(image_path, "JPEG")
+    
+    #This part sets the wallpaper
+    SPI_SETDESKWALLPAPER = 20
+    ctypes.windll.user32.SystemParametersInfoA(SPI_SETDESKWALLPAPER, 0, str(image_path), 3)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description=('Use reddit for wallpapers'))
 
+        #CHANGED DEFAULT HERE
     parser.add_argument(
         '--destination',
         type=str,
@@ -187,12 +150,6 @@ if __name__ == '__main__':
             ' False'),
         )
 
-    parser.add_argument(
-        '--output-name',
-        type=str,
-        default=None,
-        help='Output filename (defaults to imgur name)',
-        )
 
     parser.add_argument(
         '--reddit-json-url',
@@ -208,15 +165,6 @@ if __name__ == '__main__':
         help='Set wallpaper? (True / False), default is True',
     )
 
-    parser.add_argument(
-        '--min-resolution',
-        type=str,
-        default='None',
-        help=('Specify resolution (format is NxN, example: 1920x1080). '
-              'Enter from 3 to 5 digits. We\'ll try to guess the '
-              'resolution based on the post title and permalink')
-    )
-
     args = parser.parse_args()
 
     if not os.path.exists(args.destination) and args.destination == DATA_DIR:
@@ -227,16 +175,7 @@ if __name__ == '__main__':
             ('Destination directory %s does not exist, or is '
              'unreadable') % args.destination)
 
-    if args.min_resolution == 'None':
-        desired_res = None
-    elif RES_RE.match(args.min_resolution):
-        desired_res = args.min_resolution.split('x')
-    else:
-        print("Error: Bad resolution, or resolution too big (or small)\n")
-        parser.print_help()
-        sys.exit(1)
-
-    image = get_image(args.reddit_json_url, desired_res=desired_res)
+    image = get_image(args.reddit_json_url)
 
     if not image:
         print("No image found")
@@ -245,10 +184,6 @@ if __name__ == '__main__':
     target_file_name = args.output_name or image[1]
     file_path = os.path.join(args.destination, target_file_name)
 
-    if not os.path.exists(file_path) or (
-            os.path.exists(file_path) and
-            args.overwrite_existing == 'True'):
-        save_image(image[0], file_path)
-
+    save_image(image[0], file_path)
     if args.set_wallpaper == 'True':
-        display_image(file_path)
+        display_image(file_path,image[2])
