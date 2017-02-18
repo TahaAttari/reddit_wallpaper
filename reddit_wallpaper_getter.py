@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+#Thanks to Benoit C. Sirois for the original code
+#https://github.com/benwah
+
 try:
     from urllib.request import urlopen
     from urllib.error import HTTPError
