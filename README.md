@@ -1,6 +1,6 @@
 # Reddit wallpaper getter
 
-Run this script at startup to set your background to a random image from reddit, by default using /r/wallpapers on a Windows Computer (except XP).
+Run this script at startup to set your background to a random image from reddit, by default using /r/wallpapers on a Windows OS (except XP).
 
 **Note**: Reddit sometimes throttles requests to it's json API, or sometimes the request times out. Try again if it fails to work.
 
