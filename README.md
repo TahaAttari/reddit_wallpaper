@@ -1,24 +1,23 @@
 # Reddit wallpaper getter
 
-Run this script at startup to set your background to a random image from reddit, by default using /r/wallpapers. It works with gnome, smii, spectrwm, and perhaps others. Not KDE or XFCE as far as I know.
+Run this script at startup to set your background to a random image from reddit, by default using /r/wallpapers on a Windows Computer (except XP).
 
 **Note**: Reddit sometimes throttles requests to it's json API, or sometimes the request times out. Try again if it fails to work.
 
-**Note2**: It only currently support image links from imgur.com
+**Note2**: It takes the source image of the post preview image, so NSFW posts will probably not work (but I don't know I haven't tried)
+
+**Note3**: No resolution matching, the original has it, this is a worse version. I'm sorry but I didn't want to limit myself to imgur links.
 
 ## Requirements:
 
 * Python 2.7+ or 3
-
-For tiling window managers:
-
-* feh (sudo apt-get install feh)
+* Pillow
 
 ## Usage:
 
 You can just run:
 
-    $ ./reddit_wallpaper_getter.py
+    python reddit_wallpaper_getter.py
 
 Output of --help:
 
@@ -28,7 +27,6 @@ usage: reddit_wallpaper_getter.py [-h] [--destination DESTINATION]
                                   [--output-name OUTPUT_NAME]
                                   [--reddit-json-url REDDIT_JSON_URL]
                                   [--set-wallpaper SET_WALLPAPER]
-                                  [--min-resolution MIN_RESOLUTION]
 
 Use reddit for wallpapers
 
@@ -46,9 +44,5 @@ optional arguments:
                         dit.com/r/wallpapers/top.json?t=week&limit=50)
   --set-wallpaper SET_WALLPAPER
                         Set wallpaper? (True / False), default is True
-  --min-resolution MIN_RESOLUTION
-                        Specify resolution (format is NxN, example:
-                        1920x1080). Enter from 3 to 5 digits. We'll try to
-                        guess the resolution based on the post title and
-                        permalink
+
 </pre>
