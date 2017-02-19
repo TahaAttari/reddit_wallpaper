@@ -22,7 +22,7 @@ import socket
 import ctypes
 
 #My preferred subreddit
-REDDIT_URL = 'http://www.reddit.com/r/wallpaper.json?t=week&limit=100'
+REDDIT_URL = 'http://www.reddit.com/r/wallpapers.json?t=week&limit=100'
 TIMEOUT = 5
 
 #Highly original name for a wallpaper folder (I'm using the working directory)
