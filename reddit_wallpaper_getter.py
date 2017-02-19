@@ -22,7 +22,7 @@ import socket
 import ctypes
 
 #My preferred subreddit
-REDDIT_URL = 'http://www.reddit.com/r/wallpaper.json?t=week&limit=100'
+REDDIT_URL = 'http://www.reddit.com/u/ChosenBeard/m/sfw.json?t=week&limit=100'
 TIMEOUT = 5
 
 #Highly original name for a wallpaper folder (I'm using the working directory)
@@ -30,14 +30,6 @@ DATA_DIR = "wallpaper"
 
 MAX_ATTEMPTS = 5
 SLEEP_SECONDS_AFTER_ATTEMPT = 2
-
-#DIDNT USE THESE CHANGED THE SCRIPT
-#if you want resolution matching these are helpful regexes from the original
-IMGUR_RE = re.compile(
-    r'http://(i\.|www\.)?imgur.com/(?P<filename>\w{2,})(\.jpg|/)?$')
-RES_RE = re.compile('\d{3,5}x\d{3,5}')
-RES_DATA_RE = re.compile(
-    r'.*([^\d]|^)+(?P<x>\d{3,5}) ?(x|_|×){1} ?(?P<y>\d{3,5}).*', re.UNICODE)
 
 def get_image(url):
     """
@@ -63,24 +55,17 @@ def get_image(url):
             time.sleep(SLEEP_SECONDS_AFTER_ATTEMPT)
             i += 1
 
-    candidates = []
+    candidates = data.get('data', {}).get('children', {})
     
-    #gather the images
-    for item in data.get('data', {}).get('children', {}):
-        candidates.append(item['data'])
-
-    if len(candidates) == 0:
-        return None
-    else:
-        #pick a random one
-        image = candidates[random.randrange(0, len(candidates))]
-        
-        #return the [URL,image name,post title]
-        return [
-            image['preview']['images'][0]['source']['url'],
-            'wallpaper_image.jpg',
-            image['title']
-        ]
+    #pick a random one
+    image = candidates[random.randrange(0, len(candidates))]['data']
+    
+    #return the [URL,image name,post title]
+    return [
+        image['preview']['images'][0]['source']['url'],
+        'wallpaper_image.jpg',
+        image['title']
+    ]
 
 
 def save_image(url, file_path):
@@ -142,6 +127,13 @@ if __name__ == '__main__':
         type=str,
         default=DATA_DIR,
         help='Destination directory (default: %s)' % DATA_DIR,
+        )
+    
+    parser.add_argument(
+        '--output-name',
+        type=str,
+        default=None,
+        help='Output filename (defaults to imgur name)',
         )
 
     parser.add_argument(
