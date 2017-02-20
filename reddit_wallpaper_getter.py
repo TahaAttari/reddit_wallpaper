@@ -22,7 +22,7 @@ import socket
 import ctypes
 
 #My preferred subreddit
-REDDIT_URL = 'http://www.reddit.com/r/wallpapers.json?t=week&limit=100'
+REDDIT_URL = 'http://www.reddit.com/u/ChosenBeard/m/sfw.json?t=week&limit=100'
 TIMEOUT = 5
 
 #Highly original name for a wallpaper folder (I'm using the working directory)
@@ -69,7 +69,10 @@ def get_image(url):
 
 
 def save_image(url, file_path):
-    os.remove(file_path)
+    try:
+        os.remove(file_path)
+    except:
+        pass
     f = open(file_path, 'wb')
 
     i = 0
