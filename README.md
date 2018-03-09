@@ -8,7 +8,7 @@ It will add the title of the post to the top of the image for context. Maybe you
 
 **Note2**: It takes the source image of the post preview image, so NSFW posts will probably not work (but I don't know I haven't tried [Why do you want an NSFW wallpaper?])
 
-**Note3**: No resolution matching, the original has it, this is a worse version. I'm sorry but I didn't want to limit myself to imgur links.
+**Note3**: Unlike the original this won't match the wallpaper resolution to your monitor
 
 ## Requirements:
 
